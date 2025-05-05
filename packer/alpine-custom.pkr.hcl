@@ -1,0 +1,85 @@
+// Define the required Packer version
+packer {
+  required_version = ">= 1.12"
+  required_plugins {
+    amazon = {
+      source  = "github.com/hashicorp/amazon"
+      version = "~> 1"
+    }
+    ansible = {
+      version = "~> 1"
+      source  = "github.com/hashicorp/ansible"
+    }
+  }
+}
+
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+variable "aws_instance_type" {
+  type    = string
+  default = "t2.micro"
+}
+variable "ami_base_version" {
+  type    = string
+  default = "3.21"
+}
+variable "ami_architecture" {
+  type        = string
+  description = "Architecture of the AMI (x86_64 or arm64)"
+  default     = "x86_64"
+  validation {
+    condition     = contains(["x86_64", "arm64"], var.ami_architecture)
+    error_message = "The ami_architecture variable must be either 'x86_64' or 'arm64'."
+  }
+}
+variable "aws_ami_output_regions" {
+  description = "List of regions to copy the AMI to"
+  type        = list(string)
+  default = [
+    "us-east-1"
+  ]
+}
+
+
+// Define the source block for the AWS EBS builder
+source "amazon-ebs" "alpine" {
+  ami_name      = "alpine-${var.ami_base_version}-${var.ami_architecture}-bios-cloudinit-custom-{{timestamp}}"
+  instance_type = var.aws_instance_type
+  region        = var.aws_region
+  source_ami_filter {
+    filters = {
+      virtualization-type = "hvm"
+      name                = "alpine-${var.ami_base_version}*-${var.ami_architecture}-bios-cloudinit*"
+      root-device-type    = "ebs"
+    }
+    owners      = ["538276064493"] # Official Alpine Linux AMI owner ID
+    most_recent = true
+  }
+  ssh_username                = "alpine"
+  associate_public_ip_address = true
+  encrypt_boot                = true
+  ami_regions                 = var.aws_ami_output_regions
+}
+
+// Define the build block
+build {
+  sources = ["source.amazon-ebs.alpine"]
+
+  provisioner "shell" {
+    inline = [
+      "doas apk update",
+      "doas apk add ansible git",
+      "doas mkdir -p /opt/ansible",
+      "doas chown alpine:alpine /opt/ansible",
+      "doas chmod 750 /opt/ansible",
+    ]
+  }
+
+  provisioner "ansible" {
+    playbook_file       = "../ansible/config-image.yml"
+    inventory_directory = "../ansible/inventory"
+    #extra_arguments = [ "-vvvv" ]
+  }
+}

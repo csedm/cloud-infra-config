@@ -1,0 +1,15 @@
+# roles/ansible-pull-setup/templates/ansible-pull.service.j2
+[Unit]
+Description=Ansible Pull Automation
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ansible-pull -U {{ ansible_pull_repo_url }} -C {{ ansible_pull_branch }}  -d {{ ansible_pull_dest }} --full --accept-host-key -i {{ ansible_pull_inventory }} {{ ansible_pull_playbook }}
+WorkingDirectory={{ ansible_pull_dest }}
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

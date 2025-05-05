@@ -1,0 +1,71 @@
+---
+# roles/ansible-pull-setup/tasks/main.yml
+- name: Create ansible directories
+  file:
+    path: "{{ dir }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ ansible_pull_dest }}"
+#    - "{{ ansible_pull_dest }}/inventory"
+#    - /etc/cron.d/
+  loop_control:
+    loop_var: 'dir'
+
+- name: Determine init system
+  shell: |
+    if [ -d /run/systemd/system ]; then
+      echo systemd
+    elif [ "$(cat /proc/1/comm)" = "init" ]; then
+      echo busybox
+    else
+      echo unknown
+    fi
+  register: init_system
+  changed_when: false
+
+- name: Setup ansible-pull via systemd (for systemd systems)
+  block:
+    - name: Create ansible-pull systemd service
+      template:
+        src: ansible-pull.service.j2
+        dest: /etc/systemd/system/ansible-pull.service
+        mode: '0644'
+      
+    - name: Create ansible-pull systemd timer
+      template:
+        src: ansible-pull.timer.j2
+        dest: /etc/systemd/system/ansible-pull.timer
+        mode: '0644'
+        
+    - name: Enable and start ansible-pull timer
+      systemd:
+        name: ansible-pull.timer
+        state: started
+        enabled: yes
+        daemon_reload: yes
+  when: init_system.stdout == 'systemd'
+
+- name: Setup ansible-pull via cron (busybox systems)
+  block:
+    - name: Create ansible-pull cron job
+      template:
+        src: ansible-pull.cron.busybox.j2
+        dest: /etc/periodic/hourly/ansible-pull
+        mode: '0744'
+
+    - name: Enable and start crond (openRC)
+      service:
+        name: crond
+        state: started
+        enabled: yes
+  when: init_system.stdout == 'busybox'
+
+- name: Setup ansible-pull via cron (other systems)
+  block:
+    - name: Create ansible-pull cron job
+      template:
+        src: ansible-pull.cron.j2
+        dest: /etc/cron.d/ansible-pull
+        mode: '0644'
+  when: init_system.stdout == 'unknown'

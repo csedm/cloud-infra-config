@@ -1,0 +1,14 @@
+# roles/ansible-pull-setup/templates/ansible-pull.timer.j2
+[Unit]
+Description=Run Ansible Pull regularly
+Requires=ansible-pull.service
+
+[Timer]
+Unit=ansible-pull.service
+OnBootSec={{ ansible_pull_boot_delay|default('3min') }}
+OnUnitActiveSec={{ ansible_pull_interval|default('30min') }}
+RandomizedDelaySec={{ ansible_pull_random_delay|default('60') }}
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

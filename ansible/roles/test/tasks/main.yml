@@ -1,0 +1,6 @@
+---
+- name: add test file
+  ansible.builtin.file:
+    path: /root/test.txt
+    state: touch
+    mode: '0644'

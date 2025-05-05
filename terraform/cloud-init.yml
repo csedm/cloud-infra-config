@@ -1,0 +1,12 @@
+#cloud-config
+users:
+  - default
+  - name: testuser
+    primary_group: testuser
+    groups: alpine, wheel
+    shell: /bin/sh
+    lock_passwd: false
+#    password: ${password}
+    ssh_authorized_keys:
+      - ${ssh_key}
+    doas: [permit nopass testuser]
