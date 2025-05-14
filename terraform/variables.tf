@@ -1,3 +1,8 @@
+variable "origin_repo" {
+  description = "The repository name in which this code originates."
+  type        = string
+  default     = "cloud-infra-config"
+}
 variable "aws_region" {
   description = "The AWS region to deploy the resources in"
   type        = string

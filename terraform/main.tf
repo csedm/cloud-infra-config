@@ -1,5 +1,11 @@
 provider "aws" {
   region = var.aws_region
+  default_tags {
+    tags = {
+      Origin_Repo     = var.origin_repo
+      Environment     = "dev"
+    }
+  }
 }
 
 data "aws_ami" "alpine_custom_ami" {

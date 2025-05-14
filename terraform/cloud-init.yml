@@ -6,7 +6,6 @@ users:
     groups: alpine, wheel
     shell: /bin/sh
     lock_passwd: false
-#    password: ${password}
     ssh_authorized_keys:
       - ${ssh_key}
     doas: [permit nopass testuser]
