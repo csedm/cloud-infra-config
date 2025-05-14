@@ -3,3 +3,6 @@ ansible_pull_branch: "main"
 ansible_pull_playbook: "ansible/local.yml"
 ansible_pull_dest: "/opt/ansible"
 ansible_pull_inventory: "{{ ansible_pull_dest }}/ansible/inventory"
+packer_image_roles: [
+  "common" 
+]
