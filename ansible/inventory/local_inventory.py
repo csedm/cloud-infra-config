@@ -56,7 +56,7 @@ def main():
             
         # Try to get role tags
         try:
-            roles = get_metadata("tags/instance/Role", token)
+            roles = get_metadata("tags/instance/ansible_roles", token)
             if roles:
                 roles = roles.split(',')
                 inventory["_meta"]["hostvars"]["localhost"]["roles"] = roles

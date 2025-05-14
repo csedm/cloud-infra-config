@@ -66,7 +66,7 @@ resource "aws_instance" "alpine_image_test" {
 
   tags = {
     Name = "alpine-image-test"
-    Role = "test"
+    ansible_roles = "test"
   }
 
   # Need to fix this.
