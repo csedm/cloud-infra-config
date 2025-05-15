@@ -2,8 +2,8 @@ provider "aws" {
   region = var.aws_region
   default_tags {
     tags = {
-      Origin_Repo     = var.origin_repo
-      Environment     = "dev"
+      Origin_Repo = var.origin_repo
+      Environment = "dev"
     }
   }
 }
@@ -65,7 +65,7 @@ resource "aws_instance" "alpine_image_test" {
   }
 
   tags = {
-    Name = "alpine-image-test"
+    Name          = "alpine-image-test"
     ansible_roles = "test"
   }
 
