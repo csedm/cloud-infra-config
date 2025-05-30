@@ -1,0 +1,70 @@
+name: Packer Build
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  push:
+    paths:
+      - 'packer/**'
+      - '.github/workflows/packer.yml'
+      - 'ansible/**'
+  pull_request:
+    paths:
+      - 'packer/**'
+      - '.github/workflows/packer.yml'
+      - 'ansible/**'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Packer Template
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: latest
+
+      - name: Validate Packer template
+        run: |
+          cd packer
+          packer init alpine-custom.pkr.hcl
+          packer validate alpine-custom.pkr.hcl
+
+  build:
+    name: Build AMI with Packer
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: latest
+
+      - name: Set up Python (for Ansible inventory script)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
+
+      - name: Build AMI with Packer
+        run: |
+          cd packer
+          packer init alpine-custom.pkr.hcl
+          packer build -var-file=dev.auto.pkrvars.hcl alpine-custom.pkr.hcl

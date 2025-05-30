@@ -41,11 +41,19 @@ variable "aws_ami_output_regions" {
     "us-east-1"
   ]
 }
-
+variable "build_type" {
+  type        = string
+  description = "Type of build (dev or prd)"
+  default     = "dev"
+  validation {
+    condition     = contains(["dev", "prd"], var.build_type)
+    error_message = "The build_type variable must be either 'dev' or 'prd'."
+  }
+}
 
 // Define the source block for the AWS EBS builder
 source "amazon-ebs" "alpine" {
-  ami_name      = "alpine-${var.ami_base_version}-${var.ami_architecture}-bios-cloudinit-custom-{{timestamp}}"
+  ami_name      = "alpine-${var.ami_base_version}-${var.ami_architecture}-bios-cloudinit-custom-${var.build_type}-{{timestamp}}"
   instance_type = var.aws_instance_type
   region        = var.aws_region
   source_ami_filter {
@@ -61,6 +69,10 @@ source "amazon-ebs" "alpine" {
   associate_public_ip_address = true
   encrypt_boot                = true
   ami_regions                 = var.aws_ami_output_regions
+  tags = {
+    Name        = "alpine-${var.ami_base_version}-${var.ami_architecture}-bios-cloudinit-custom-${var.build_type}"
+    BuildType   = var.build_type
+  }
 }
 
 // Define the build block
