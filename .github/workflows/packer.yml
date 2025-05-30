@@ -35,10 +35,10 @@ jobs:
           packer init alpine-custom.pkr.hcl
           packer validate alpine-custom.pkr.hcl
 
-  build:
-    name: Build Alpine AMI with Packer
+  build-dev:
+    name: Build Alpine AMI (Dev)
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,8 +63,42 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
 
-      - name: Build Alpine AMI with Packer
+      - name: Build Alpine AMI with Packer (Dev)
         run: |
           cd packer
           packer init alpine-custom.pkr.hcl
           packer build -var-file=dev.auto.pkrvars.hcl alpine-custom.pkr.hcl
+
+  build-prod:
+    name: Build Alpine AMI (Prod)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: latest
+
+      - name: Set up Python (for Ansible inventory script)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
+
+      - name: Build Alpine AMI with Packer (Prod)
+        run: |
+          cd packer
+          packer init alpine-custom.pkr.hcl
+          packer build -var-file=prod.pkrvars.hcl alpine-custom.pkr.hcl
