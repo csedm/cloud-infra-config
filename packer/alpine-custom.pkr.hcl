@@ -73,6 +73,10 @@ source "amazon-ebs" "alpine" {
   tags = {
     Name        = "alpine-${var.ami_base_version}-${var.ami_architecture}-bios-cloudinit-custom-${var.build_type}"
     BuildType   = var.build_type
+    ReleaseVersion = "{{timestamp}}"
+    OSVersion   = var.ami_base_version
+    Architecture = var.ami_architecture
+    CreatedBy   = "Packer"
   }
 }
 
