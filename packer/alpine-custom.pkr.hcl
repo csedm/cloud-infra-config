@@ -69,6 +69,7 @@ source "amazon-ebs" "alpine" {
   associate_public_ip_address = true
   encrypt_boot                = true
   ami_regions                 = var.aws_ami_output_regions
+  imds_support                = "v2.0"
   tags = {
     Name        = "alpine-${var.ami_base_version}-${var.ami_architecture}-bios-cloudinit-custom-${var.build_type}"
     BuildType   = var.build_type
