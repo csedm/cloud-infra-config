@@ -4,12 +4,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
-  push:
-    paths:
-      - 'packer/**'
-      - '.github/workflows/packer.yml'
-      - 'ansible/**'
   pull_request:
+    branches:
+      - main
     paths:
       - 'packer/**'
       - '.github/workflows/packer.yml'
