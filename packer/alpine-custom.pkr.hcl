@@ -71,8 +71,12 @@ source "amazon-ebs" "alpine" {
   ami_regions                 = var.aws_ami_output_regions
   imds_support                = "v2.0"
   tags = {
-    Name        = "alpine-${var.ami_base_version}-${var.ami_architecture}-bios-cloudinit-custom-${var.build_type}"
-    BuildType   = var.build_type
+    Name           = "alpine-${var.ami_base_version}-${var.ami_architecture}-bios-cloudinit-custom-${var.build_type}"
+    BuildType      = var.build_type
+    ReleaseVersion = "{{timestamp}}"
+    OSVersion      = var.ami_base_version
+    Architecture   = var.ami_architecture
+    CreatedBy      = "Packer"
   }
 }
 
