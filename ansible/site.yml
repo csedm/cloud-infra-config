@@ -1,0 +1,11 @@
+---
+- name: Apply configuration based on roles
+  hosts: all
+  gather_facts: yes
+  become: yes
+  become_method: doas
+  tasks:
+    - name: Include role based on tags
+      include_role:
+        name: "{{ item }}"
+      loop: "{{ ['common'] + hostvars[inventory_hostname]['roles'] }}"

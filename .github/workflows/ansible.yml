@@ -1,0 +1,43 @@
+name: Ansible Lint and Test
+
+on:
+  workflow_dispatch: # Makes the workflow manually triggered
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python and install Ansible with AWS dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible and AWS dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible ansible-lint boto3 botocore
+
+      # Step 3: Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Update to your preferred region
+
+      # Step 4: Lint the site.yml playbook in the ansible subdirectory
+      - name: Lint site.yml
+        working-directory: ansible
+        run: ansible-lint site.yml
+
+      # Step 5: Perform a test run of the site.yml playbook using the aws_ec2 inventory plugin
+      - name: Test run site.yml with AWS EC2 inventory
+        working-directory: ansible
+        run: |
+          ansible-playbook site.yml --check -i inventory/my_account.aws_ec2.yml
