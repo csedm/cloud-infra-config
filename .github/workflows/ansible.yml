@@ -1,0 +1,32 @@
+name: Ansible Lint and Test
+
+on:
+  workflow_dispatch: # Makes the workflow manually triggered
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python and install Ansible
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible and ansible-lint
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible ansible-lint
+
+      # Step 3: Lint the site.yml playbook
+      - name: Lint site.yml
+        run: ansible-lint site.yml
+
+      # Step 4: Perform a test run of the site.yml playbook
+      - name: Test run site.yml
+        run: ansible-playbook site.yml --check
