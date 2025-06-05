@@ -84,15 +84,12 @@ source "amazon-ebs" "alpine" {
 build {
   sources = ["source.amazon-ebs.alpine"]
 
-  provisioner "shell" {
-    inline = [
-      "doas apk update",
-      "doas apk add ansible git",
-      "doas mkdir -p /opt/ansible",
-      "doas chown alpine:alpine /opt/ansible",
-      "doas chmod 750 /opt/ansible",
-    ]
-  }
+  #provisioner "shell" {
+  #  inline = [
+  #    "doas apk update",
+  #    "doas apk add git"
+  #  ]
+  #}
 
   provisioner "ansible" {
     playbook_file       = "../ansible/config-image.yml"
