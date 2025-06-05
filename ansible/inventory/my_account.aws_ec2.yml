@@ -1,0 +1,17 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - lookup('env', 'AWS_REGION') | default('us-east-1')
+keyed_groups:
+  - prefix: arch
+    key: 'architecture'
+  - prefix: tag
+    key: tags
+  - prefix: instance_type
+    key: instance_type
+  - key: tags.ansible_roles
+    separator: ''
+    prefix: role_
+hostnames:
+  - tag:Name
+compose:
+  ansible_host: private_ip_address
