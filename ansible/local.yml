@@ -9,6 +9,6 @@
     - name: Include role based on tags
       include_role:
         name: "{{ item }}"
-      loop: "{{ ['common'] + hostvars['localhost']['roles'] }}"
+      loop: "{{ ['ansible-pull'] + hostvars['localhost']['roles'] }}"
       #loop: "{{ group_names }}"
       #when: item != "localhost" and item != "all"
