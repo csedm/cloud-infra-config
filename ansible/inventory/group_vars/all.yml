@@ -6,3 +6,5 @@ ansible_pull_inventory: "{{ ansible_pull_dest }}/ansible/inventory"
 packer_image_roles: [
   "common" 
 ]
+
+ansible_ssh_common_args: "-o ForwardAgent=yes -o ProxyJump=ansible@{{ aws_bastion_host }}"
