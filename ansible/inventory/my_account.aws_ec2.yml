@@ -14,5 +14,5 @@ keyed_groups:
 hostnames:
   - tag:Name
 compose:
-  ansible_host: private_ip_address
-  roles: tags.ansible_roles
+  ansible_host: "{{ ipv6_address | default(private_ip_address) }}"
+  ansible_roles: tags.ansible_roles

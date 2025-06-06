@@ -69,7 +69,5 @@ resource "aws_instance" "alpine_image_test" {
     ansible_roles = "test"
   }
 
-  # Need to fix this.
-  # Prevent user being locked and therefore unable to login.
-  user_data = templatefile("cloud-init.yml", { ssh_key = file(var.aws_key_pair_path) })
+  user_data = templatefile("cloud-init.yml", { ssh_key = aws_key_pair.alpine_image_test_key.public_key })
 }
