@@ -1,0 +1,3 @@
+ansible_user: "{{ lookup('amazon.aws.ssm_parameter', '/ansible/' ~ env_type ~ '/ansible_user') }}"
+aws_bastion_host: "[{{ lookup('amazon.aws.ssm_parameter', '/' ~ project_name ~ '/' ~ env_type ~ '/bastion_host_ipv6') }}]"
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ForwardAgent=yes -o ProxyJump={{ ansible_user }}@{{ aws_bastion_host }}"
