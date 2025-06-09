@@ -12,5 +12,7 @@
   tasks:
     - name: Include role(s)
       include_role:
-        name: "{{ item }}"
+        name: "{{ role }}"
       loop: "{{ common_roles }}"
+      loop_control:
+        loop_var: role
