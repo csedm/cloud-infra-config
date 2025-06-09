@@ -23,6 +23,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install ansible ansible-lint boto3 botocore
 
+      - name: Install Ansible collections/roles
+        working-directory: ansible
+        run: |
+          ansible-galaxy install -r requirements.yml
+
       # Step 3: Configure AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
