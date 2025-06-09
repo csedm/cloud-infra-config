@@ -1,11 +1,19 @@
 ---
+- name: Gather facts
+  hosts: all
+  become: true
+  become_method: community.general.doas
+  gather_facts: true
+
 - name: Apply configuration based on roles
   hosts: all
-  gather_facts: true
+  gather_facts: false
   become: true
   become_method: community.general.doas
   tasks:
     - name: Include role based on tags
       ansible.builtin.include_role:
-        name: "{{ item }}"
-      loop: "{{ ['common'] + hostvars[inventory_hostname]['roles'] }}"
+        name: "{{ role }}"
+      loop: "{{ common_roles + (hostvars[inventory_hostname].ansible_roles | default([])) }}"
+      loop_control:
+        loop_var: role

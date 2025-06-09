@@ -1,18 +1,22 @@
 plugin: amazon.aws.aws_ec2
 regions:
   - "{{ lookup('env', 'AWS_REGION') | default('us-east-1') }}"
+  - "us-east-2"
 keyed_groups:
-  - prefix: arch
-    key: 'architecture'
-  - prefix: tag
-    key: tags
+  #- prefix: tag
+  #  key: tags
   - prefix: instance_type
     key: instance_type
+    parent_group: aws_ec2
   - key: tags.ansible_roles
     separator: ''
     prefix: role_
+  - key: tags.Environment
+    prefix: env
 hostnames:
   - tag:Name
 compose:
-  ansible_host: private_ip_address
-  roles: tags.ansible_roles
+  ansible_host: "{{ ipv6_address | default(private_ip_address) }}"
+  ansible_roles: tags.ansible_roles
+  env_type: tags.Environment
+  project_name: tags.Origin_Repo

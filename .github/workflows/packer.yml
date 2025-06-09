@@ -29,6 +29,8 @@ jobs:
           version: latest
 
       - name: Validate Packer template
+        env:
+          PKR_VAR_rename_default_user_to: ${{ secrets.PKR_VAR_rename_default_user_to }}
         run: |
           cd packer
           packer init alpine-custom.pkr.hcl
@@ -64,6 +66,8 @@ jobs:
           aws-region: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
 
       - name: Build Alpine AMI with Packer (Dev)
+        env:
+          PKR_VAR_rename_default_user_to: ${{ secrets.PKR_VAR_rename_default_user_to }}
         run: |
           cd packer
           packer init alpine-custom.pkr.hcl
@@ -99,6 +103,8 @@ jobs:
           aws-region: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
 
       - name: Build Alpine AMI with Packer (Prod)
+        env:
+          PKR_VAR_rename_default_user_to: ${{ secrets.PKR_VAR_rename_default_user_to }}
         run: |
           cd packer
           packer init alpine-custom.pkr.hcl

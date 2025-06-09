@@ -1,0 +1,2 @@
+# configuration for default hostname of a packer image
+ansible_ssh_common_args: ""
