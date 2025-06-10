@@ -25,8 +25,9 @@ data "aws_ami" "alpine_custom_ami" {
 }
 
 resource "aws_key_pair" "alpine_image_test_key" {
-  key_name   = "alpine-image-test-key"
-  public_key = file(var.aws_key_pair_path)
+  for_each = { for sshkey in var.aws_ssh_authorized_keys : sshkey.name => sshkey }
+  key_name   = each.value.name
+  public_key = each.value.public_key
 }
 
 resource "aws_security_group" "alpine_image_test_sg" {
@@ -50,7 +51,7 @@ resource "aws_security_group" "alpine_image_test_sg" {
 resource "aws_instance" "alpine_image_test" {
   ami                    = data.aws_ami.alpine_custom_ami.id
   instance_type          = var.aws_instance_type
-  key_name               = aws_key_pair.alpine_image_test_key.key_name
+  key_name               = aws_key_pair.alpine_image_test_key["alpine-image-test-key"].key_name
   vpc_security_group_ids = [aws_security_group.alpine_image_test_sg.id]
 
   associate_public_ip_address = true
@@ -69,5 +70,22 @@ resource "aws_instance" "alpine_image_test" {
     ansible_roles = "test"
   }
 
-  user_data = templatefile("cloud-init.yml", { ssh_key = aws_key_pair.alpine_image_test_key.public_key })
+  # Either method works; inline or cloud-init.yml.tftpl.
+  user_data = <<EOF
+#cloud-config
+users:
+  - name: "${var.custom_default_user}"
+    ssh_authorized_keys:
+%{ for key in [for sshkey in var.aws_ssh_authorized_keys : sshkey.public_key] ~}
+    - ${key}
+%{ endfor ~}
+    lock_passwd: false
+    passwd: "*"
+EOF
+/*
+  user_data = templatefile("cloud-init.yml.tftpl", {
+    ssh_authorized_keys = [for sshkey in var.aws_ssh_authorized_keys : sshkey.public_key],
+    custom_default_user = var.custom_default_user
+  })
+  */
 }

@@ -13,9 +13,9 @@ variable "aws_instance_type" {
   type        = string
   default     = "t2.micro"
 }
-variable "aws_key_pair_path" {
-  description = "Path to the public key file for the AWS key pair"
-  type        = string
+variable "aws_ssh_authorized_keys" {
+  description = "The public ssh keys to authorize for the instance(s)."
+  type        = list(map(string))
 }
 variable "aws_ami_owner_id" {
   description = "Owner ID of the AMI"
@@ -35,4 +35,8 @@ variable "ami_architecture" {
     condition     = contains(["x86_64", "arm64"], var.ami_architecture)
     error_message = "The ami_architecture variable must be either 'x86_64' or 'arm64'."
   }
+}
+variable "custom_default_user" {
+  description = "The custom default user for the AMI"
+  type        = string
 }

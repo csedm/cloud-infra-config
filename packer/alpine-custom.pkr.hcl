@@ -91,8 +91,9 @@ build {
   provisioner "shell" {
     # attempt to rename the default user on alpine
     inline = [
-      "echo 'permit nopass alpine' | doas tee /etc/doas.d/packertmp.conf",
-      "doas sed -i 's/alpine/${var.rename_default_user_to}/g' /etc/doas.conf",
+      "doas sed -i 's/name: alpine/name: ${var.rename_default_user_to}/' /etc/cloud/cloud.cfg",
+      "doas sed -i 's/gecos: alpine Cloud User/gecos: ${var.rename_default_user_to} Cloud User/' /etc/cloud/cloud.cfg",
+      "doas sed -i 's/- permit nopass alpine/- permit nopass ${var.rename_default_user_to}/' /etc/cloud/cloud.cfg",
       "doas cp -ar /home/alpine /home/${var.rename_default_user_to}",
       "doas sed -i 's/alpine/${var.rename_default_user_to}/g' /etc/passwd", # rename user, home directory
       "doas sed -i 's/^alpine:/${var.rename_default_user_to}:/' /etc/group", # rename group
@@ -111,7 +112,6 @@ build {
     # finalize rename of default user on alpine
     inline = [
       "doas rm -rf /home/alpine",
-      "doas rm -rf /etc/doas.d/packertmp.conf"
     ]
   }
 }
