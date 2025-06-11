@@ -13,10 +13,18 @@ keyed_groups:
     prefix: role_
   - key: tags.Environment
     prefix: env
+  - key: tags.Origin_Repo
+    prefix: project
+filters:
+    instance-state-name: running
 hostnames:
   - tag:Name
+  - ipv6_address
+  - public_dns_name
+  - public_ip_address
+  - private_ip_address
 compose:
-  ansible_host: "{{ ipv6_address | default(private_ip_address) }}"
+  ansible_host: ipv6_address | default(public_ip_address) | default(private_ip_address)
   ansible_roles: tags.ansible_roles
   env_type: tags.Environment
   project_name: tags.Origin_Repo
