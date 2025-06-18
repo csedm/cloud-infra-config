@@ -3,7 +3,7 @@ regions:
   - "{{ lookup('env', 'AWS_REGION') | default('us-east-1') }}"
   - "us-east-2"
 keyed_groups:
-  #- prefix: tag
+  # - prefix: tag
   #  key: tags
   - prefix: instance_type
     key: instance_type

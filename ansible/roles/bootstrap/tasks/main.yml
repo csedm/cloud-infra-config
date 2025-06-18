@@ -2,7 +2,7 @@
 - name: Ensure bootstrap-required packages are present
   ansible.builtin.package:
     name: "{{ package.name }}"
-    state: "{{ package.state  }}"
+    state: "{{ package.state }}"
   loop: "{{ bootstrap_required_packages[ansible_os_family] }}"
   loop_control:
     loop_var: package
@@ -112,4 +112,4 @@
     state: present
     create: true
     backup: true
-  notify: "bootstrap : restart sshd"
+  notify: "Bootstrap : restart sshd"
