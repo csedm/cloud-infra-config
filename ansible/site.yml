@@ -17,6 +17,6 @@
     - name: Include role based on tags
       ansible.builtin.include_role:
         name: "{{ role }}"
-      loop: "{{ common_roles + [(hostvars[inventory_hostname].ansible_roles | default([]))] }}"
+      loop: "{{ common_roles + ([hostvars[inventory_hostname].ansible_roles] | default([])) }}"
       loop_control:
         loop_var: role
