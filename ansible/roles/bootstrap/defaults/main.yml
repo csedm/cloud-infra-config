@@ -1,0 +1,24 @@
+---
+bootstrap_required_packages:
+  Debian:
+    - name: sudo
+      state: present
+  RedHat:
+    - name: sudo
+      state: present
+  Alpine:
+    - name: doas
+      state: present
+
+bootstrap_required_groups:
+  - name: ansible
+    state: present
+
+bootstrap_required_users:
+  - name: ansible
+    state: present
+    primary_group: ansible
+
+bootstrap_required_sudo_users:
+  - name: ansible
+    state: present

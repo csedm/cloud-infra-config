@@ -1,0 +1,114 @@
+---
+- name: Ensure bootstrap-required packages are present
+  ansible.builtin.package:
+    name: "{{ package.name }}"
+    state: "{{ package.state  }}"
+  loop: "{{ bootstrap_required_packages[ansible_os_family] }}"
+  loop_control:
+    loop_var: package
+  tags:
+    - package
+
+- name: Create bootstrap-required groups
+  ansible.builtin.group:
+    name: "{{ group.name }}"
+    gid: "{{ group.gid | default(omit) }}"
+    state: "{{ group.state }}"
+  loop: "{{ bootstrap_required_groups }}"
+  loop_control:
+    loop_var: group
+
+- name: Create bootstrap-required users
+  ansible.builtin.user:
+    name: "{{ user.name }}"
+    state: "{{ user.state }}"
+    uid: "{{ user.uid | default(omit) }}"
+    group: "{{ user.primary_group }}"
+    groups: "{{ user.groups }}"
+    # while we want the password locked, doing so prevents ssh login on certain platforms.
+    # so we set it to * to prevent password login, but allow ssh key login.
+    password_lock: false
+    password: "*"
+  loop: "{{ bootstrap_required_users }}"
+  loop_control:
+    loop_var: user
+
+- name: Set bootstrap-required ssh authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ user_key.name }}"
+    key: "{{ user_key.sshpubkeys | map(attribute='key') | join('\n') }}"
+    state: present
+    exclusive: "{{ user_key.sshpubkeys_exclusive }}"
+  loop: "{{ bootstrap_required_ssh_authorized_keys }}"
+  loop_control:
+    loop_var: user_key
+
+- name: Ensure bootstrap-required doas user configuration
+  ansible.builtin.lineinfile:
+    path: /etc/doas.conf
+    regexp: "^permit nopass {{ user.name }}"
+    line: "permit nopass {{ user.name }}"
+    mode: '0640'
+    state: "{{ user.state }}"
+    create: true
+    backup: true
+    validate: 'doas -C %s'
+  loop: "{{ bootstrap_required_sudo_users }}"
+  loop_control:
+    loop_var: user
+  when: ansible_become_method == 'community.general.doas'
+
+- name: Ensure bootstrap-required doas group configuration
+  ansible.builtin.lineinfile:
+    path: /etc/doas.conf
+    regexp: "^permit nopass :{{ group.name }}"
+    line: "permit nopass :{{ group.name }}"
+    mode: '0640'
+    state: "{{ group.state }}"
+    create: true
+    backup: true
+    validate: 'doas -C %s'
+  loop: "{{ bootstrap_required_sudo_groups }}"
+  loop_control:
+    loop_var: group
+  when: ansible_become_method == 'community.general.doas'
+
+- name: Ensure bootstrap-required sudoer user configuration
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/00-ansible-bootstrap
+    regexp: "^{{ user.name }}"
+    line: "{{ user.name }} ALL=(ALL) NOPASSWD:ALL"
+    mode: '0440'
+    state: "{{ user.state }}"
+    create: true
+    backup: true
+    validate: 'visudo -cf %s'
+  loop: "{{ bootstrap_required_sudo_users }}"
+  loop_control:
+    loop_var: user
+  when: ansible_become_method == 'ansible.builtin.sudo'
+
+- name: Ensure bootstrap-required sudoer group configuration
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/00-ansible-bootstrap
+    regexp: "^%{{ group.name }}"
+    line: "%{{ group.name }} ALL=(ALL) NOPASSWD:ALL"
+    mode: '0440'
+    state: "{{ group.state }}"
+    create: true
+    backup: true
+    validate: 'visudo -cf %s'
+  loop: "{{ bootstrap_required_sudo_groups }}"
+  loop_control:
+    loop_var: group
+  when: ansible_become_method == 'ansible.builtin.sudo'
+
+- name: Enable ssh agent forwarding
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^AllowAgentForwarding'
+    line: 'AllowAgentForwarding yes'
+    mode: '0644'
+    state: present
+    create: true
+    backup: true

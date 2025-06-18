@@ -1,4 +1,55 @@
-
+ansible_python_interpreter: auto_silent
 common_roles: [
-  "test"
+  "bootstrap",
 ]
+# env_type generally comes from the ec2 dynamic inventory, however in the case of
+# packer it must be passed in manually with -e based on the build_type
+# the following lines currently fail on MacOS without the following environment variable set:
+# export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+# ref: https://github.com/ansible/ansible/issues/32499
+common_user_information_base: "{{ lookup('amazon.aws.ssm_parameter', '/ansible/' ~ env_type ~ '/common_user_information_base', default=([])) | from_yaml }}"
+common_group_information_base: "{{ lookup('amazon.aws.ssm_parameter', '/ansible/' ~ env_type ~ '/common_group_information_base', default=([])) | from_yaml }}"
+
+# Extract all unique groups from common_user_information_base where role_presence contains bootstrap
+bootstrap_required_groups: >-
+  {{
+    common_group_information_base
+    | selectattr('role_presence', 'contains', 'bootstrap')
+    | list
+  }}
+
+# Extract user items where role_presence contains bootstrap
+bootstrap_required_users: >-
+  {{
+    common_user_information_base
+    | selectattr('role_presence', 'contains', 'bootstrap')
+    | list
+  }}
+
+# Extract ssh authorized keys where user role_presence contains bootstrap
+bootstrap_required_ssh_authorized_keys: >-
+  {{
+    common_user_information_base
+    | selectattr('role_presence', 'contains', 'bootstrap')
+    | list
+  }}
+
+# Extract users items where role_presence contains bootstrap
+# Used for both doas and sudo
+bootstrap_required_sudo_users: >-
+  [{% for u in common_user_information_base if 'bootstrap' in u.role_presence %}
+    {
+      "name": "{{ u.name }}",
+      "state": "{{ u.sudo_state }}"
+    }{% if not loop.last %},{% endif %}
+  {% endfor %}]
+
+# Extract group items where role_presence contains bootstrap and sudo_state is present
+# Used for both doas and sudo
+bootstrap_required_sudo_groups: >-
+  [{% for g in common_group_information_base if 'bootstrap' in g.role_presence and g.sudo_state == 'present' %}
+    {
+      "name": "{{ g.name }}",
+      "state": "{{ g.sudo_state }}"
+    }{% if not loop.last %},{% endif %}
+  {% endfor %}]
