@@ -2,8 +2,12 @@
 - name: Gather facts
   hosts: all
   gather_facts: true
-  become: true
-  become_method: community.general.doas # relies on prior install from packer CLI commands
+  tasks:
+    - name: Group hosts by ansible_os_family
+      ansible.builtin.add_host:
+        name: "{{ inventory_hostname }}"
+        groups: "{{ ansible_os_family | lower }}"
+      changed_when: false
 
 - name: Bootstrap and provision packer image
   hosts: all
