@@ -1,0 +1,37 @@
+---
+- name: Ensure /etc/ssh/sshd_config.d/ exists
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/
+    state: directory
+    owner: root
+    group: 0
+    mode: '0700'
+  tags:
+  - ssh
+
+- name: Ensure sshd_config.d/ include directive exists
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    state: present
+    insertbefore: '^#Port 22'
+    firstmatch: true
+    line: 'Include /etc/ssh/sshd_config.d/*.conf'
+    validate: '/usr/sbin/sshd -t -f %s'
+  tags:
+  - ssh
+
+- name: Disable SSH PasswordAuthentication
+  ansible.builtin.lineinfile:
+    path: "/etc/ssh/sshd_config.d/50-disable-password-auth"
+    state: present
+    create: true
+    owner: root
+    group: 0
+    mode: '0600'
+    line: 'PasswordAuthentication no'
+    validate: '/usr/sbin/sshd -t -f %s'
+  when: disable_ssh_password_auth | default(false)
+  notify:
+    - "Common : restart sshd"
+  tags:
+  - ssh
