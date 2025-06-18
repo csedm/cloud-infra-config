@@ -112,3 +112,4 @@
     state: present
     create: true
     backup: true
+  notify: "bootstrap : restart sshd"
