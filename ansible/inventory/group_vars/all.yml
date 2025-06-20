@@ -1,6 +1,7 @@
 ansible_python_interpreter: auto_silent
 common_roles: [
   "bootstrap",
+  "common"
 ]
 # env_type generally comes from the ec2 dynamic inventory, however in the case of
 # packer it must be passed in manually with -e based on the build_type
@@ -53,3 +54,65 @@ bootstrap_required_sudo_groups: >-
       "state": "{{ g.sudo_state }}"
     }{% if not loop.last %},{% endif %}
   {% endfor %}]
+
+common_packages:
+  Debian:
+  - unattended-upgrades
+  - htop
+  - tree
+  RedHat:
+  - tree
+
+common_uninstall_packages:
+  Debian:
+  - popularity-contest
+
+# Extract group items where role_presence contains common
+common_groups: >-
+  {{
+    common_group_information_base
+    | selectattr('role_presence', 'contains', 'common')
+    | list
+  }}
+
+# Extract user items where role_presence contains common
+common_users: >-
+  {{
+    common_user_information_base
+    | selectattr('role_presence', 'contains', 'common')
+    | list
+  }}
+
+# Extract ssh authorized keys where user role_presence contains common
+# This one needs to include both bootstrap and common keys because of exclusive=true
+common_ssh_authorized_keys: >-
+  {{
+    bootstrap_required_ssh_authorized_keys
+    + 
+    common_user_information_base
+    | selectattr('role_presence', 'contains', 'common')
+    | list
+  }}
+
+# Extract users items where role_presence contains common
+# Used for both doas and sudo
+common_sudo_users: >-
+  [{% for u in common_user_information_base if 'common' in u.role_presence %}
+    {
+      "name": "{{ u.name }}",
+      "state": "{{ u.sudo_state }}"
+    }{% if not loop.last %},{% endif %}
+  {% endfor %}]
+
+# Extract group items where role_presence contains common and sudo_state is present
+# Used for both doas and sudo
+common_sudo_groups: >-
+  [{% for g in common_group_information_base if 'common' in g.role_presence and g.sudo_state == 'present' %}
+    {
+      "name": "{{ g.name }}",
+      "state": "{{ g.sudo_state }}"
+    }{% if not loop.last %},{% endif %}
+  {% endfor %}]
+
+# Instructs common role to disable ssh password-based authentication
+disable_ssh_password_auth: true
