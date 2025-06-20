@@ -67,7 +67,7 @@ resource "aws_instance" "alpine_image_test" {
 
   tags = {
     Name          = "alpine-image-test"
-    ansible_roles = "test"
+    ansible_roles = ""
   }
 
   # Either method works; inline or cloud-init.yml.tftpl.

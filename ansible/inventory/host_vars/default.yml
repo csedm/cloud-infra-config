@@ -1,2 +1,23 @@
 # configuration for default hostname of a packer image
 ansible_ssh_common_args: ""
+
+# custom_default_user: "{{ lookup('env', 'CUSTOM_DEFAULT_USER') }}"
+# Extract user items where role_presence contains bootstrap
+# Filter out the custom_default_user, which is handled by the packer config
+# This is a special carve-out from the common config in group_vars/all.yml
+# custom_default_user must be set by -e on the ansible provisioner in the packer template.
+bootstrap_required_users: >-
+  {{
+    common_user_information_base
+    | selectattr('role_presence', 'contains', 'bootstrap')
+    | selectattr('name', 'ne', custom_default_user)
+    | list
+  }}
+
+bootstrap_required_ssh_authorized_keys: >-
+  {{
+    common_user_information_base
+    | selectattr('role_presence', 'contains', 'bootstrap')
+    | selectattr('name', 'ne', custom_default_user)
+    | list
+  }}

@@ -105,7 +105,11 @@ build {
   provisioner "ansible" {
     playbook_file       = "../ansible/config-image.yml"
     inventory_directory = "../ansible/inventory"
-    #extra_arguments = [ "-e", "ansible_user=${var.rename_default_user_to}" ]
+    extra_arguments = [ 
+      "-e", "custom_default_user=${var.rename_default_user_to}",
+      "-e", "env_type=${var.build_type}"
+      ]
+      # we must pass -e env_type to make sure its set for ansible to query aws ssm by environment
   }
 
   provisioner "shell" {
