@@ -1,0 +1,60 @@
+---
+- name: Apply all OS and package updates
+  hosts: all
+  become: true
+  vars:
+    pre_reboot_delay: 60
+    reboot_msg: "Admin is rebooting the machine to finish applying system updates."
+    packer_mode: false
+  tasks:
+  - name: "Debian | Install all available package updates"
+    ansible.builtin.apt:
+      upgrade: true
+      update_cache: true
+      cache_valid_time: 7200
+    when: ansible_os_family == "Debian"
+
+  - name: "Redhat | Install all available package updates"
+    ansible.builtin.dnf:
+      name: "*"
+      state: latest
+    when: ansible_os_family == 'RedHat'
+
+  - name: "Debian | RedHat : Check if a reboot is required"
+    ansible.builtin.stat:
+      path: /var/run/reboot-required
+      get_checksum: false
+    register: reboot_required_file
+    when: ansible_os_family == 'Debian' or ansible_os_family == 'RedHat'
+
+  - name: "OpenBSD | Run syspatch"
+    community.general.syspatch:
+    register: syspatch_result
+    when: ansible_os_family == 'OpenBSD'
+
+  - name: "OpenBSD | Run package updates"
+    community.general.openbsd_pkg:
+      name: '*'
+      state: latest
+    when: ansible_os_family == 'OpenBSD'
+
+  - name: Update Alpine packages
+    community.general.apk:
+      update_cache: true
+      upgrade: true
+    register: apk_result
+    when: ansible_os_family == 'Alpine'
+
+  - name: "Reboot server if required"
+    ansible.builtin.assert: { that: true, quiet: true }
+    changed_when: packer_mode == false
+                and ((reboot_required_file.stat.exists is defined and reboot_required_file.stat.exists)
+                or (syspatch_result.reboot_needed is defined and syspatch_result.reboot_needed)
+                or (apk_result.failed is defined and apk_result.changed and apk_result.failed == false))
+    notify: "Reboot server after patches"
+
+  handlers:
+  - name: "Reboot server after patches"
+    ansible.builtin.reboot:
+      msg: "{{ reboot_msg }}"
+      pre_reboot_delay: "{{ pre_reboot_delay }}"
