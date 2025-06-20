@@ -20,9 +20,6 @@ jobs:
   setup-and-validate:
     name: Setup and Validate
     runs-on: ubuntu-latest
-    outputs:
-      should-build-dev: ${{ steps.conditions.outputs.should-build-dev }}
-      should-build-prod: ${{ steps.conditions.outputs.should-build-prod }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -67,84 +64,92 @@ jobs:
           packer init alpine-custom.pkr.hcl
           packer validate alpine-custom.pkr.hcl
 
-      - name: Set build conditions
-        id: conditions
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.ref }}" != "refs/heads/main" ]]; then
-            echo "should-build-dev=true" >> $GITHUB_OUTPUT
-          else
-            echo "should-build-dev=false" >> $GITHUB_OUTPUT
-          fi
-          
-          if [[ ("${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "schedule") && "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "should-build-prod=true" >> $GITHUB_OUTPUT
-          else
-            echo "should-build-prod=false" >> $GITHUB_OUTPUT
-          fi
-
-  packer-build:
-    name: Build Alpine AMI
+  packer-build-dev:
+    name: Build Alpine AMI (Dev)
     runs-on: ubuntu-latest
     needs: setup-and-validate
-    if: needs.setup-and-validate.outputs.should-build-dev == 'true' || needs.setup-and-validate.outputs.should-build-prod == 'true'
-    strategy:
-      matrix:
-        include:
-          - environment: dev
-            var-file: dev.auto.pkrvars.hcl
-            condition: ${{ needs.setup-and-validate.outputs.should-build-dev == 'true' }}
-          - environment: prod
-            var-file: prod.pkrvars.hcl
-            condition: ${{ needs.setup-and-validate.outputs.should-build-prod == 'true' }}
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
     steps:
-      - name: Skip if condition not met
-        if: matrix.condition != 'true'
-        run: |
-          echo "Skipping ${{ matrix.environment }} build"
-          exit 0
-
       - name: Checkout repository
-        if: matrix.condition == 'true'
         uses: actions/checkout@v4
 
       - name: Set up Packer
-        if: matrix.condition == 'true'
         uses: hashicorp/setup-packer@v3
         with:
           version: latest
 
       - name: Set up Python
-        if: matrix.condition == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       - name: Install Ansible and dependencies
-        if: matrix.condition == 'true'
         working-directory: ansible
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Install Ansible collections/roles
-        if: matrix.condition == 'true'
         working-directory: ansible
         run: |
           ansible-galaxy install -r requirements.yml
 
       - name: Configure AWS credentials
-        if: matrix.condition == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
 
-      - name: Build Alpine AMI with Packer (${{ matrix.environment }})
-        if: matrix.condition == 'true'
+      - name: Build Alpine AMI with Packer (Dev)
         env:
           PKR_VAR_rename_default_user_to: ${{ vars.PKR_VAR_RENAME_DEFAULT_USER_TO }}
         run: |
           cd packer
           packer init alpine-custom.pkr.hcl
-          packer build -var-file=${{ matrix.var-file }} alpine-custom.pkr.hcl
+          packer build -var-file=dev.auto.pkrvars.hcl alpine-custom.pkr.hcl
+
+  packer-build-prod:
+    name: Build Alpine AMI (Prod)
+    runs-on: ubuntu-latest
+    needs: setup-and-validate
+    if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: latest
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible and dependencies
+        working-directory: ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Ansible collections/roles
+        working-directory: ansible
+        run: |
+          ansible-galaxy install -r requirements.yml
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
+
+      - name: Build Alpine AMI with Packer (Prod)
+        env:
+          PKR_VAR_rename_default_user_to: ${{ vars.PKR_VAR_RENAME_DEFAULT_USER_TO }}
+        run: |
+          cd packer
+          packer init alpine-custom.pkr.hcl
+          packer build -var-file=prod.pkrvars.hcl alpine-custom.pkr.hcl
