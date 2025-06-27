@@ -1,5 +1,5 @@
 ---
-- name: Ensure required packages are present
+- name: Ensure package states are correctly present or absent
   ansible.builtin.package:
     name: "{{ package.name }}"
     state: "{{ package.state }}"
@@ -75,7 +75,7 @@
 
 - name: Ensure required sudoer user configuration
   ansible.builtin.lineinfile:
-    path: /etc/sudoers.d/00-ansible-bootstrap
+    path: /etc/sudoers.d/00-ansible-common
     regexp: "^{{ user.name }}"
     line: "{{ user.name }} ALL=(ALL) NOPASSWD:ALL"
     mode: '0440'
@@ -90,7 +90,7 @@
 
 - name: Ensure required sudoer group configuration
   ansible.builtin.lineinfile:
-    path: /etc/sudoers.d/00-ansible-bootstrap
+    path: /etc/sudoers.d/00-ansible-common
     regexp: "^%{{ group.name }}"
     line: "%{{ group.name }} ALL=(ALL) NOPASSWD:ALL"
     mode: '0440'
@@ -103,13 +103,8 @@
     loop_var: group
   when: ansible_become_method == 'ansible.builtin.sudo'
 
-- name: Enable ssh agent forwarding
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: '^AllowAgentForwarding'
-    line: 'AllowAgentForwarding yes'
-    mode: '0644'
-    state: present
-    create: true
-    backup: true
-  notify: "Bootstrap : restart sshd"
+- name: Include ssh configuration
+  ansible.builtin.include_tasks: ssh.yml
+
+- name: Include security configuration
+  ansible.builtin.include_tasks: security.yml

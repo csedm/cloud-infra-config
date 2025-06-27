@@ -1,5 +1,7 @@
 ---
 # vars file for sshbastion
-# sshbastion_admin_group : Dictionary containing info about the group to use to designate bastion admins. The group is used to grant its members console access on the bastion.
+# Dictionary containing info about the group to use to designate bastion admins. 
+# The group is used to grant its members console access on the bastion.
+# sshbastion_admin_group
 #   name: bastion_admin
 #   gid: <number>

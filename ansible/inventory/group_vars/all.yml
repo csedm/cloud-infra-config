@@ -1,6 +1,6 @@
 ansible_python_interpreter: auto_silent
 common_roles: [
-  "bootstrap",
+  "common",
 ]
 # env_type generally comes from the ec2 dynamic inventory, however in the case of
 # packer it must be passed in manually with -e based on the build_type
@@ -33,7 +33,13 @@ common_package_information_base:
     packages:
       Alpine: vim
       Debian: vim
-
+  - name: popularity-contest
+    state: absent
+    role_presence:
+      - bootstrap
+      - common
+    packages:
+      Debian: popularity-contest
 
 effective_roles: "{{ common_roles + (ansible_roles | default([])) }}"
 
@@ -63,8 +69,8 @@ dynamic_required_ssh_authorized_keys_list: >-
   {% endfor %}]
 
 dynamic_required_sudo_users: >-
-  [{% for u in common_user_information_base 
-      if u.role_presence | intersect(effective_roles) | length > 0 
+  [{% for u in common_user_information_base
+      if u.role_presence | intersect(effective_roles) | length > 0
       and u.sudo_state is defined %}
     {
       "name": "{{ u.name }}",
@@ -73,8 +79,8 @@ dynamic_required_sudo_users: >-
   {% endfor %}]
 
 dynamic_required_sudo_groups: >-
-  [{% for g in common_group_information_base 
-      if g.role_presence | intersect(effective_roles) | length > 0 
+  [{% for g in common_group_information_base
+      if g.role_presence | intersect(effective_roles) | length > 0
       and g.sudo_state is defined %}
     {
       "name": "{{ g.name }}",
@@ -83,10 +89,13 @@ dynamic_required_sudo_groups: >-
   {% endfor %}]
 
 dynamic_required_packages_list: >-
-  [{% for pkg in common_package_information_base 
+  [{% for pkg in common_package_information_base
       if pkg.role_presence | intersect(effective_roles) | length > 0 %}
     {
       "name": "{{ pkg.packages[ansible_os_family] | default(pkg.name) }}",
       "state": "{{ pkg.state | default('present') }}"
     }{% if not loop.last %},{% endif %}
   {% endfor %}]
+
+# Security settings for common role
+disable_ssh_password_auth: true

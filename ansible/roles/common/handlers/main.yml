@@ -1,6 +1,6 @@
 ---
-# handlers file for bootstrap
-- name: "Bootstrap : restart sshd"
+# handlers file for common
+- name: "Common : restart sshd"
   ansible.builtin.service:
     name: sshd
     state: restarted
