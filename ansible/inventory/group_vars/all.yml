@@ -13,33 +13,114 @@ common_package_information_base:
   - name: htop
     state: present
     role_presence:
-      - bootstrap
       - common
     packages:
-      Alpine: htop
-      Debian: htop
+      Alpine:
+      Debian:
+      RedHat:
   - name: tree
     state: present
     role_presence:
-      - bootstrap
       - common
     packages:
-      Alpine: tree
-      Deban: tree
+      Alpine:
+      Debian:
+      OpenBSD:
+      RedHat:
   - name: vim
     state: present
     role_presence:
       - mgmt
     packages:
-      Alpine: vim
-      Debian: vim
+      Alpine:
+      Debian:
+      OpenBSD: vim--no_x11
+  - name: ansible
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Debian:
+      OpenBSD:
+      RedHat:
+  - name: ansible-lint
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Debian:
+      OpenBSD:
+      RedHat:
+  - name: golang
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Alpine: go
+      Debian: golang-go
+  - name: nmap
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Alpine:
+      Debian:
+      OpenBSD:
+      RedHat:
+  - name: ndiff
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Debian:
+      RedHat:
+  - name: unzip
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Debian:
+  - name: terraform
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      OpenBSD:
+  - name: bash
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      OpenBSD:
+  - name: zsh
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Debian:
+      RedHat:
+  - name: git
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Alpine:
+      Debian:
+      RedHat:
+  - name: pip
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Alpine: py3-pip
+      Debian: python3-pip
+  # Packages to remove
   - name: popularity-contest
     state: absent
     role_presence:
-      - bootstrap
       - common
     packages:
-      Debian: popularity-contest
+      Debian:
 
 effective_roles: "{{ common_roles + (ansible_roles | default([])) }}"
 
@@ -90,9 +171,10 @@ dynamic_required_sudo_groups: >-
 
 dynamic_required_packages_list: >-
   [{% for pkg in common_package_information_base
-      if pkg.role_presence | intersect(effective_roles) | length > 0 %}
+      if pkg.role_presence | intersect(effective_roles) | length > 0
+      and pkg.packages[ansible_os_family] is defined %}
     {
-      "name": "{{ pkg.packages[ansible_os_family] | default(pkg.name) }}",
+      "name": "{{ (pkg.packages[ansible_os_family] is not none and pkg.packages[ansible_os_family] or pkg.name) }}",
       "state": "{{ pkg.state | default('present') }}"
     }{% if not loop.last %},{% endif %}
   {% endfor %}]
