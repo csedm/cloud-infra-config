@@ -34,7 +34,13 @@ common_package_information_base:
     packages:
       Alpine: vim
       Debian: vim
-
+  - name: popularity-contest
+    state: absent
+    role_presence:
+      - bootstrap
+      - common
+    packages:
+      Debian: popularity-contest
 
 effective_roles: "{{ common_roles + (ansible_roles | default([])) }}"
 
