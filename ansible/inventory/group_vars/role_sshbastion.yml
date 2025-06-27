@@ -1,0 +1,8 @@
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ForwardAgent=yes"
+
+sshbastion_admin_group: >-
+  {{
+    common_group_information_base
+    | selectattr('gid', 'equalto', 1101)
+    | first
+  }}

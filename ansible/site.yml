@@ -4,9 +4,8 @@
   gather_facts: true
   tasks:
     - name: Group hosts by ansible_os_family
-      ansible.builtin.add_host:
-        name: "{{ inventory_hostname }}"
-        groups: "{{ ansible_os_family | lower }}"
+      ansible.builtin.group_by:
+        key: "{{ ansible_os_family | lower }}"
       changed_when: false
 
 - name: Apply configuration based on roles
@@ -17,6 +16,6 @@
     - name: Include role based on tags
       ansible.builtin.include_role:
         name: "{{ role }}"
-      loop: "{{ common_roles + ([hostvars[inventory_hostname].ansible_roles] | default([])) }}"
+      loop: "{{ common_roles + (hostvars[inventory_hostname].ansible_roles | default([])) }}"
       loop_control:
         loop_var: role

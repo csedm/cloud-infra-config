@@ -6,18 +6,22 @@ ansible_ssh_common_args: ""
 # Filter out the custom_default_user, which is handled by the packer config
 # This is a special carve-out from the common config in group_vars/all.yml
 # custom_default_user must be set by -e on the ansible provisioner in the packer template.
-bootstrap_required_users: >-
-  {{
-    common_user_information_base
-    | selectattr('role_presence', 'contains', 'bootstrap')
-    | selectattr('name', 'ne', custom_default_user)
-    | list
-  }}
 
-bootstrap_required_ssh_authorized_keys: >-
-  {{
-    common_user_information_base
-    | selectattr('role_presence', 'contains', 'bootstrap')
-    | selectattr('name', 'ne', custom_default_user)
-    | list
-  }}
+dynamic_required_users_list: >-
+  [{% for u in common_user_information_base
+      if u.role_presence | intersect(effective_roles) | length > 0
+      and u.name != custom_default_user %}
+    {{ u | to_json }}{% if not loop.last %},{% endif %}
+  {% endfor %}]
+
+dynamic_required_ssh_authorized_keys_list: >-
+  [{% for u in common_user_information_base
+      if u.role_presence | intersect(effective_roles) | length > 0
+      and u.name != custom_default_user
+      and u.sshpubkeys is defined and u.sshpubkeys | length > 0 %}
+    {
+      "name": "{{ u.name }}",
+      "sshpubkeys": {{ u.sshpubkeys | to_json }},
+      "sshpubkeys_exclusive": {{ u.sshpubkeys_exclusive | default(false) | to_json }}
+    }{% if not loop.last %},{% endif %}
+  {% endfor %}]
