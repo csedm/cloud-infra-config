@@ -1,0 +1,6 @@
+---
+# handlers file for sshbastion
+- name: "SSH bastion : restart sshd"
+  ansible.builtin.service:
+    name: sshd
+    state: restarted

@@ -9,47 +9,84 @@ common_roles: [
 # ref: https://github.com/ansible/ansible/issues/32499
 common_user_information_base: "{{ lookup('amazon.aws.ssm_parameter', '/ansible/' ~ env_type ~ '/common_user_information_base', default=([])) | from_yaml }}"
 common_group_information_base: "{{ lookup('amazon.aws.ssm_parameter', '/ansible/' ~ env_type ~ '/common_group_information_base', default=([])) | from_yaml }}"
+common_package_information_base:
+  - name: htop
+    state: present
+    role_presence:
+      - bootstrap
+      - common
+    packages:
+      Alpine: htop
+      Debian: htop
+  - name: tree
+    state: present
+    role_presence:
+      - bootstrap
+      - common
+    packages:
+      Alpine: tree
+      Deban: tree
+  - name: vim
+    state: present
+    role_presence:
+      - mgmt
+    packages:
+      Alpine: vim
+      Debian: vim
 
-# Extract all unique groups from common_user_information_base where role_presence contains bootstrap
-bootstrap_required_groups: >-
-  {{
-    common_group_information_base
-    | selectattr('role_presence', 'contains', 'bootstrap')
-    | list
-  }}
 
-# Extract user items where role_presence contains bootstrap
-bootstrap_required_users: >-
-  {{
-    common_user_information_base
-    | selectattr('role_presence', 'contains', 'bootstrap')
-    | list
-  }}
+effective_roles: "{{ common_roles + (ansible_roles | default([])) }}"
 
-# Extract ssh authorized keys where user role_presence contains bootstrap
-bootstrap_required_ssh_authorized_keys: >-
-  {{
-    common_user_information_base
-    | selectattr('role_presence', 'contains', 'bootstrap')
-    | list
-  }}
+# Create dynamic lists of groups, users, ssh keys, and packages.
+# Intersect list of roles applicable for the host with the master list of groups, users, keys, packages
+dynamic_required_groups_list: >-
+  [{% for g in common_group_information_base
+      if g.role_presence | intersect(effective_roles) | length > 0 %}
+    {{ g | to_json }}{% if not loop.last %},{% endif %}
+  {% endfor %}]
 
-# Extract users items where role_presence contains bootstrap
-# Used for both doas and sudo
-bootstrap_required_sudo_users: >-
-  [{% for u in common_user_information_base if 'bootstrap' in u.role_presence %}
+dynamic_required_users_list: >-
+  [{% for u in common_user_information_base
+      if u.role_presence | intersect(effective_roles) | length > 0 %}
+    {{ u | to_json }}{% if not loop.last %},{% endif %}
+  {% endfor %}]
+
+dynamic_required_ssh_authorized_keys_list: >-
+  [{% for u in common_user_information_base
+      if u.role_presence | intersect(effective_roles) | length > 0
+      and u.sshpubkeys is defined and u.sshpubkeys | length > 0 %}
+    {
+      "name": "{{ u.name }}",
+      "sshpubkeys": {{ u.sshpubkeys | to_json }},
+      "sshpubkeys_exclusive": {{ u.sshpubkeys_exclusive | default(false) | to_json }}
+    }{% if not loop.last %},{% endif %}
+  {% endfor %}]
+
+dynamic_required_sudo_users: >-
+  [{% for u in common_user_information_base 
+      if u.role_presence | intersect(effective_roles) | length > 0 
+      and u.sudo_state is defined %}
     {
       "name": "{{ u.name }}",
       "state": "{{ u.sudo_state }}"
     }{% if not loop.last %},{% endif %}
   {% endfor %}]
 
-# Extract group items where role_presence contains bootstrap and sudo_state is present
-# Used for both doas and sudo
-bootstrap_required_sudo_groups: >-
-  [{% for g in common_group_information_base if 'bootstrap' in g.role_presence and g.sudo_state == 'present' %}
+dynamic_required_sudo_groups: >-
+  [{% for g in common_group_information_base 
+      if g.role_presence | intersect(effective_roles) | length > 0 
+      and g.sudo_state is defined %}
     {
       "name": "{{ g.name }}",
       "state": "{{ g.sudo_state }}"
+    }{% if not loop.last %},{% endif %}
+  {% endfor %}]
+
+dynamic_required_packages_list: >-
+  [{% for pkg in common_package_information_base 
+      if pkg.role_presence | intersect(effective_roles) | length > 0 %}
+    {
+      "name": "{{ pkg.packages[ansible_os_family] | default(pkg.name) }}",
+      "state": "{{ pkg.state | default('present') }}"
     }{% if not loop.last %},{% endif %}
   {% endfor %}]

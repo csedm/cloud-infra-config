@@ -1,0 +1,5 @@
+---
+# defaults file for sshbastion
+sshbastion_dest_filename: 55-sshd_bastion.conf
+sshbastion_admin_group:
+  name: bastion_admin

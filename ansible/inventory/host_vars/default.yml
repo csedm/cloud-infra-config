@@ -6,18 +6,21 @@ ansible_ssh_common_args: ""
 # Filter out the custom_default_user, which is handled by the packer config
 # This is a special carve-out from the common config in group_vars/all.yml
 # custom_default_user must be set by -e on the ansible provisioner in the packer template.
-bootstrap_required_users: >-
+
+dynamic_required_users_list:
   {{
     common_user_information_base
-    | selectattr('role_presence', 'contains', 'bootstrap')
+    | selectattr('role_presence', 'intersect', effective_roles)
     | selectattr('name', 'ne', custom_default_user)
     | list
+    | unique
   }}
 
-bootstrap_required_ssh_authorized_keys: >-
+dynamic_required_ssh_authorized_keys_list:
   {{
     common_user_information_base
-    | selectattr('role_presence', 'contains', 'bootstrap')
+    | selectattr('role_presence', 'intersect', effective_roles)
     | selectattr('name', 'ne', custom_default_user)
     | list
+    | unique
   }}

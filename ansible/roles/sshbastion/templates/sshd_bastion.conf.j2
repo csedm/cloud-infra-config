@@ -1,0 +1,23 @@
+# Permit admin users to login to the bastion
+# Restrict all other users to proxying
+# Allow {{ sshbastion_admin_group.name }} group members full shell access
+Match Group {{ sshbastion_admin_group.name }}
+   PermitTTY yes
+   X11Forwarding no
+   AllowAgentForwarding yes
+   AllowTcpForwarding yes
+   AllowStreamLocalForwarding no
+   PermitTunnel no
+   GatewayPorts no
+   ForceCommand none
+
+# Restrict all users NOT in {{ sshbastion_admin_group.name }} to proxying only (no shell)
+Match Group !{{ sshbastion_admin_group.name }}
+   PermitTTY no
+   X11Forwarding no
+   AllowAgentForwarding yes
+   AllowTcpForwarding yes
+   AllowStreamLocalForwarding no
+   PermitTunnel no
+   GatewayPorts no
+   ForceCommand /usr/sbin/nologin

@@ -25,6 +25,6 @@ hostnames:
   - private_ip_address
 compose:
   ansible_host: ipv6_address | default(public_ip_address) | default(private_ip_address)
-  ansible_roles: tags.ansible_roles
+  ansible_roles: (tags.ansible_roles | default('')).split(',') | select('truthy') | list
   env_type: tags.Environment
   project_name: tags.Origin_Repo
