@@ -1,6 +1,0 @@
----
-# handlers file for common
-- name: "Common : restart sshd"
-  ansible.builtin.service:
-    name: sshd
-    state: restarted

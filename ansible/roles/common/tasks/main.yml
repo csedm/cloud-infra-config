@@ -1,5 +1,0 @@
----
-# tasks file for common
-- ansible.builtin.import_tasks: packages.yml
-- ansible.builtin.import_tasks: security.yml
-- ansible.builtin.import_tasks: users.yml
