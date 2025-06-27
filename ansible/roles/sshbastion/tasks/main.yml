@@ -42,7 +42,7 @@
     group: 0
     mode: '0600'
     validate: /usr/sbin/sshd -t -f %s
-    backup: yes
+    backup: true
   notify:
     - "SSH bastion : restart sshd"
   tags:

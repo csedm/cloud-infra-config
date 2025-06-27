@@ -104,7 +104,7 @@
   when: ansible_become_method == 'ansible.builtin.sudo'
 
 - name: Include ssh configuration
-  include_tasks: ssh.yml
+  ansible.builtin.include_tasks: ssh.yml
 
 - name: Include security configuration
-  include_tasks: security.yml
+  ansible.builtin.include_tasks: security.yml
