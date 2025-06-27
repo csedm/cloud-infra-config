@@ -1,6 +1,6 @@
 ansible_python_interpreter: auto_silent
 common_roles: [
-  "bootstrap",
+  "common",
 ]
 # env_type generally comes from the ec2 dynamic inventory, however in the case of
 # packer it must be passed in manually with -e based on the build_type

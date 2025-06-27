@@ -75,7 +75,7 @@
 
 - name: Ensure required sudoer user configuration
   ansible.builtin.lineinfile:
-    path: /etc/sudoers.d/00-ansible-bootstrap
+    path: /etc/sudoers.d/00-ansible-common
     regexp: "^{{ user.name }}"
     line: "{{ user.name }} ALL=(ALL) NOPASSWD:ALL"
     mode: '0440'
@@ -90,7 +90,7 @@
 
 - name: Ensure required sudoer group configuration
   ansible.builtin.lineinfile:
-    path: /etc/sudoers.d/00-ansible-bootstrap
+    path: /etc/sudoers.d/00-ansible-common
     regexp: "^%{{ group.name }}"
     line: "%{{ group.name }} ALL=(ALL) NOPASSWD:ALL"
     mode: '0440'
