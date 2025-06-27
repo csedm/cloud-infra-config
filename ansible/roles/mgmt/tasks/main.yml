@@ -1,0 +1,26 @@
+---
+- name: Copy trusted SSH CA key
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/ssh-ca.pub
+    line: "{{ lookup('amazon.aws.ssm_parameter', '/ansible/' ~ env_type ~ '/ssh-ca-pub') }}"
+    state: present
+    create: true
+    owner: root
+    group: 0
+    mode: '0600'
+  notify:
+  - "mgmt : Restart sshd"
+  tags:
+  - sshca
+
+- name: Configure SSH to trust CA key
+  ansible.builtin.copy:
+    src: trusted-user-ca-keys.conf
+    dest: /etc/ssh/sshd_config.d/50-trusted-user-ca-keys.conf
+    owner: root
+    group: 0
+    mode: '0650'
+  notify: 
+  - "mgmt : Restart sshd"
+  tags:
+  - sshca
