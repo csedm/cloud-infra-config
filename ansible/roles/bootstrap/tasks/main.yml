@@ -1,5 +1,5 @@
 ---
-- name: Ensure required packages are present or absent
+- name: Ensure package states are correctly present or absent
   ansible.builtin.package:
     name: "{{ package.name }}"
     state: "{{ package.state }}"
@@ -103,13 +103,8 @@
     loop_var: group
   when: ansible_become_method == 'ansible.builtin.sudo'
 
-- name: Enable ssh agent forwarding
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: '^AllowAgentForwarding'
-    line: 'AllowAgentForwarding yes'
-    mode: '0644'
-    state: present
-    create: true
-    backup: true
-  notify: "Bootstrap : restart sshd"
+- name: Include ssh configuration
+  include_tasks: ssh.yml
+
+- name: Include security configuration
+  include_tasks: security.yml

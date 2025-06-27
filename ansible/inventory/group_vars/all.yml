@@ -97,3 +97,6 @@ dynamic_required_packages_list: >-
       "state": "{{ pkg.state | default('present') }}"
     }{% if not loop.last %},{% endif %}
   {% endfor %}]
+
+# Security settings for common role
+disable_ssh_password_auth: true
