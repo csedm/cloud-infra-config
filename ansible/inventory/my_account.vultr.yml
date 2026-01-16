@@ -9,8 +9,6 @@ api_key: "{{ lookup('ansible.builtin.env', 'VULTR_API_KEY') }}"
 # filters:
 #   - tag: production
 
-#groups:
-  #vultr_cloud: true
 # Group hosts by region
 keyed_groups:
   - key: vultr_region
@@ -19,12 +17,18 @@ keyed_groups:
   - key: vultr_os
     prefix: vultr_os
     parent_group: vultr_cloud
+  - key: vultr_tags
+    prefix: vultr_tag
+    parent_group: vultr_cloud
+  - key: vultr_tags | default([]) | select('match', '^ansible_roles:') | map('regex_replace', '^ansible_roles:', '')
+    prefix: role
 
 # Add custom host variables
 compose:
-  ansible_host: vultr_main_ip
-  public_ip: vultr_main_ip
+  ansible_host: vultr_v6_main_ip or vultr_main_ip
+  public_ip: vultr_v6_main_ip or vultr_main_ip
   private_ip: vultr_internal_ip
+  ansible_roles: vultr_tags | default([]) | select('match', '^ansible_roles:') | map('regex_replace', '^ansible_roles:', '') | list
 
 # Use hostnames as inventory names
 hostnames:
