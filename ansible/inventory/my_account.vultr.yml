@@ -1,0 +1,28 @@
+# Prerequisites:
+# 1. Set your Vultr API key as an environment variable:
+#    export VULTR_API_KEY=your_api_key_here
+
+plugin: vultr.cloud.vultr
+api_key: "{{ lookup('ansible.builtin.env', 'VULTR_API_KEY') }}"
+
+# Optional: Filter by specific tags
+# filters:
+#   - tag: production
+
+# Group hosts by region
+keyed_groups:
+  - key: vultr_region
+    prefix: region
+  - key: vultr_os
+    prefix: os
+
+# Add custom host variables
+compose:
+  ansible_host: vultr_main_ip
+  public_ip: vultr_main_ip
+  private_ip: vultr_internal_ip
+
+# Use hostnames as inventory names
+hostnames:
+  - vultr_hostname
+  - vultr_main_ip
