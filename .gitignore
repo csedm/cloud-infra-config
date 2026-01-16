@@ -5,3 +5,4 @@
 *.tfstate.backup
 terraform.tfvars
 .terraform/
+.ansible/
