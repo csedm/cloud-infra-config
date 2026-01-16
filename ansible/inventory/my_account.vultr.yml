@@ -9,12 +9,16 @@ api_key: "{{ lookup('ansible.builtin.env', 'VULTR_API_KEY') }}"
 # filters:
 #   - tag: production
 
+#groups:
+  #vultr_cloud: true
 # Group hosts by region
 keyed_groups:
   - key: vultr_region
-    prefix: region
+    prefix: vultr_region
+    parent_group: vultr_cloud
   - key: vultr_os
-    prefix: os
+    prefix: vultr_os
+    parent_group: vultr_cloud
 
 # Add custom host variables
 compose:
