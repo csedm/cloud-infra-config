@@ -13,8 +13,6 @@ on:
       - 'packer/**'
       - '.github/workflows/unified-workflow.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '36 12 * * 0' # Every Sunday at 12:36 UTC
 
 jobs:
   setup-and-validate:
@@ -113,7 +111,7 @@ jobs:
     name: Build Alpine AMI (Prod)
     runs-on: ubuntu-latest
     needs: setup-and-validate
-    if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
